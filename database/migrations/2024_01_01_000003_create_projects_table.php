@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('contractor_id')->constrained('contractors')->cascadeOnDelete();
-            $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();
+            $table->foreignId('contractor_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('client_id')->constrained('users')->cascadeOnDelete();
             $table->string('title');
             $table->string('address');
             $table->timestamps();

@@ -2,13 +2,18 @@
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Projects</h1>
-    <a href="{{ route('projects.create') }}"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">
-        + New Project
-    </a>
+    <h1 class="text-2xl font-bold text-gray-800">
+        {{ auth()->user()->isContractor() ? 'Projects' : 'My Projects' }}
+    </h1>
+    @if(auth()->user()->isContractor())
+        <a href="{{ route('projects.create') }}"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">
+            + New Project
+        </a>
+    @endif
 </div>
 
+@if(auth()->user()->isContractor())
 {{-- Search --}}
 <form method="GET" action="{{ route('dashboard') }}" class="mb-6">
     <div class="flex gap-2">
@@ -27,12 +32,15 @@
         @endif
     </div>
 </form>
+@endif
 
 {{-- Projects list --}}
 @if($projects->isEmpty())
     <div class="bg-white rounded shadow p-8 text-center text-gray-500">
         No projects found.
-        <a href="{{ route('projects.create') }}" class="text-blue-600 hover:underline ml-1">Create your first project.</a>
+        @if(auth()->user()->isContractor())
+            <a href="{{ route('projects.create') }}" class="text-blue-600 hover:underline ml-1">Create your first project.</a>
+        @endif
     </div>
 @else
     <div class="grid gap-4">
@@ -42,7 +50,11 @@
             <div>
                 <h2 class="text-lg font-semibold text-gray-800">{{ $project->title }}</h2>
                 <p class="text-sm text-gray-500">{{ $project->address }}</p>
-                <p class="text-sm text-gray-500">Client: {{ $project->client->full_name }}</p>
+                @if(auth()->user()->isContractor())
+                    <p class="text-sm text-gray-500">Client: {{ $project->client->full_name }}</p>
+                @else
+                    <p class="text-sm text-gray-500">Contractor: {{ $project->contractor->company_name }}</p>
+                @endif
             </div>
             <div class="text-sm text-gray-400">
                 {{ $project->rooms->count() }} room(s)

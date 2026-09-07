@@ -10,12 +10,19 @@ return new class extends Migration
     {
         // stage:  'work_agreed' or 'completed'
         // role:   'contractor'  or 'client'
+        // method: 'online' (the signer authenticated as themselves) or
+        //         'in_person' (client signed on the contractor's device
+        //         without logging in, confirming identity by typed name)
         // A stage is complete only when BOTH roles have signed for that stage
         Schema::create('signatures', function (Blueprint $table) {
             $table->id();
             $table->foreignId('room_id')->constrained('rooms')->cascadeOnDelete();
             $table->enum('stage', ['work_agreed', 'completed']);
             $table->enum('role', ['contractor', 'client']);
+            $table->enum('method', ['online', 'in_person']);
+            $table->foreignId('signed_by_user_id')->nullable()
+                ->constrained('users')->nullOnDelete();
+            $table->string('signer_name_confirmation')->nullable();
             $table->text('signature_data'); // base64 canvas image
             $table->timestamp('signed_at');
             $table->timestamps();

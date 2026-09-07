@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="max-w-md mx-auto mt-20 bg-white p-8 rounded shadow">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Contractor Login</h1>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Log In</h1>
 
     @if($errors->any())
         <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">

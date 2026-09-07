@@ -15,12 +15,12 @@ class Project extends Model
 
     public function contractor()
     {
-        return $this->belongsTo(Contractor::class);
+        return $this->belongsTo(User::class, 'contractor_id');
     }
 
     public function client()
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(User::class, 'client_id');
     }
 
     public function rooms()

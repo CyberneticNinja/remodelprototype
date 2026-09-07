@@ -5,14 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Room;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class RoomController extends Controller
 {
     // Show create room form
     public function create(Project $project)
     {
-        abort_if($project->contractor_id !== Auth::guard('contractor')->id(), 403);
+        $this->authorize('view', $project);
+        $this->authorize('create', Room::class);
 
         return view('rooms.create', compact('project'));
     }
@@ -20,11 +20,15 @@ class RoomController extends Controller
     // Store new room
     public function store(Request $request, Project $project)
     {
-        abort_if($project->contractor_id !== Auth::guard('contractor')->id(), 403);
+        $this->authorize('view', $project);
+        $this->authorize('create', Room::class);
 
         $validated = $request->validate([
-            'name'  => 'required|string|max:255',
-            'notes' => 'nullable|string',
+            'name'                    => 'required|string|max:255',
+            'notes'                   => 'nullable|string',
+            'scope_description'       => 'nullable|string',
+            'estimated_cost'          => 'nullable|numeric|min:0',
+            'estimated_duration_days' => 'nullable|integer|min:0',
         ]);
 
         $project->rooms()->create($validated);
@@ -36,11 +40,39 @@ class RoomController extends Controller
     // Show a single room
     public function show(Project $project, Room $room)
     {
-        abort_if($project->contractor_id !== Auth::guard('contractor')->id(), 403);
+        $this->authorize('view', $project);
         abort_if($room->project_id !== $project->id, 403);
 
-        $room->load('signatures', 'beforePhotos', 'afterPhotos');
+        $room->load('signatures.signedByUser', 'beforePhotos', 'afterPhotos');
 
         return view('rooms.show', compact('project', 'room'));
+    }
+
+    // Show edit form — only while the estimate isn't locked yet
+    public function edit(Project $project, Room $room)
+    {
+        abort_if($room->project_id !== $project->id, 403);
+        $this->authorize('update', $room);
+
+        return view('rooms.edit', compact('project', 'room'));
+    }
+
+    // Update the room's notes / estimate (scope, cost, duration)
+    public function update(Request $request, Project $project, Room $room)
+    {
+        abort_if($room->project_id !== $project->id, 403);
+        $this->authorize('update', $room);
+
+        $validated = $request->validate([
+            'notes'                   => 'nullable|string',
+            'scope_description'       => 'nullable|string',
+            'estimated_cost'          => 'nullable|numeric|min:0',
+            'estimated_duration_days' => 'nullable|integer|min:0',
+        ]);
+
+        $room->update($validated);
+
+        return redirect()->route('rooms.show', [$project, $room])
+            ->with('success', 'Room updated.');
     }
 }

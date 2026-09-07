@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Contractor;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // Show registration form
+    // Show registration form — contractors are the only ones who self-register
     public function showRegister()
     {
         return view('auth.register');
@@ -21,7 +21,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'first_name'      => 'required|string|max:255',
             'last_name'       => 'required|string|max:255',
-            'email'           => 'required|email|unique:contractors,email',
+            'email'           => 'required|email|unique:users,email',
             'password'        => 'required|string|min:8|confirmed',
             'phone'           => 'required|string|max:20',
             'company_name'    => 'required|string|max:255',
@@ -29,12 +29,13 @@ class AuthController extends Controller
             'company_phone'   => 'required|string|max:20',
         ]);
 
-        $contractor = Contractor::create([
+        $contractor = User::create([
             ...$validated,
+            'type'     => 'contractor',
             'password' => Hash::make($validated['password']),
         ]);
 
-        Auth::guard('contractor')->login($contractor);
+        Auth::login($contractor);
 
         return redirect()->route('dashboard');
     }
@@ -45,7 +46,7 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    // Handle login
+    // Handle login — shared by contractors and activated clients
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -53,7 +54,16 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (Auth::guard('contractor')->attempt($credentials, $request->boolean('remember'))) {
+        $user = User::where('email', $credentials['email'])->first();
+
+        // A client who hasn't activated their account yet has no password
+        if ($user && $user->isClient() && !$user->hasActivatedAccount()) {
+            return back()->withErrors([
+                'email' => 'This account hasn\'t been activated yet. Check your email for the invite link.',
+            ])->onlyInput('email');
+        }
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             return redirect()->intended(route('dashboard'));
         }
@@ -66,7 +76,7 @@ class AuthController extends Controller
     // Handle logout
     public function logout(Request $request)
     {
-        Auth::guard('contractor')->logout();
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

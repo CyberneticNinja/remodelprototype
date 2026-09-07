@@ -18,19 +18,32 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
-        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
-        <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="BROADCAST_CONNECTION" value="null"/>
-        <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
-        <env name="MAIL_MAILER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
-        <env name="SESSION_DRIVER" value="array"/>
-        <env name="PULSE_ENABLED" value="false"/>
-        <env name="TELESCOPE_ENABLED" value="false"/>
-        <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Using <server> (not <env>) is deliberate: this app's Docker
+             container sets APP_ENV/DB_CONNECTION/DB_DATABASE/etc as real
+             container environment variables (see docker-compose.yml), which
+             PHP populates into $_SERVER at process start. Laravel's Dotenv
+             checks $_SERVER before it checks putenv()/$_ENV, so PHPUnit's
+             <env> (even with force="true") loses to the container's real
+             $_SERVER values. <server> writes directly into $_SERVER and
+             actually wins. Without this, APP_ENV silently stays "local"
+             during tests (breaking the CSRF test-exemption, causing 419s on
+             every POST) and — far more seriously — DB_DATABASE stays
+             pointed at this container's real dev sqlite file, so
+             RefreshDatabase migrates/wipes your actual dev database on
+             every test run instead of using an isolated in-memory one. -->
+        <server name="APP_ENV" value="testing" force="true"/>
+        <server name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <server name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <server name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <server name="CACHE_STORE" value="array" force="true"/>
+        <server name="DB_CONNECTION" value="sqlite" force="true"/>
+        <server name="DB_DATABASE" value=":memory:" force="true"/>
+        <server name="DB_URL" value="" force="true"/>
+        <server name="MAIL_MAILER" value="array" force="true"/>
+        <server name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <server name="SESSION_DRIVER" value="array" force="true"/>
+        <server name="PULSE_ENABLED" value="false" force="true"/>
+        <server name="TELESCOPE_ENABLED" value="false" force="true"/>
+        <server name="NIGHTWATCH_ENABLED" value="false" force="true"/>
     </php>
 </phpunit>

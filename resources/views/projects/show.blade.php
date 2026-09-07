@@ -6,17 +6,23 @@
         <a href="{{ route('dashboard') }}" class="text-sm text-blue-600 hover:underline">← Back to Projects</a>
         <h1 class="text-2xl font-bold text-gray-800 mt-1">{{ $project->title }}</h1>
         <p class="text-gray-500 text-sm">{{ $project->address }}</p>
-        <p class="text-gray-500 text-sm">Client: {{ $project->client->full_name }} — {{ $project->client->phone }}</p>
+        @if(auth()->user()->isContractor())
+            <p class="text-gray-500 text-sm">Client: {{ $project->client->full_name }} — {{ $project->client->phone }}</p>
+        @else
+            <p class="text-gray-500 text-sm">Contractor: {{ $project->contractor->company_name }} — {{ $project->contractor->company_phone }}</p>
+        @endif
     </div>
-    <a href="{{ route('rooms.create', $project) }}"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">
-        + Add Room
-    </a>
+    @if(auth()->user()->isContractor())
+        <a href="{{ route('rooms.create', $project) }}"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">
+            + Add Room
+        </a>
+    @endif
 </div>
 
 @if($project->rooms->isEmpty())
     <div class="bg-white rounded shadow p-8 text-center text-gray-500">
-        No rooms yet. Add your first room to get started.
+        No rooms yet.
     </div>
 @else
     <div class="grid gap-6">
@@ -33,6 +39,13 @@
             {{-- Notes --}}
             @if($room->notes)
                 <p class="text-sm text-gray-600 mb-4">{{ $room->notes }}</p>
+            @endif
+
+            @if($room->estimated_cost || $room->estimated_duration_days)
+                <p class="text-xs text-gray-500 mb-4">
+                    @if($room->estimated_cost) Estimate: ${{ number_format($room->estimated_cost, 2) }} @endif
+                    @if($room->estimated_duration_days) &middot; {{ $room->estimated_duration_days }} day(s) @endif
+                </p>
             @endif
 
             {{-- Stage status --}}
