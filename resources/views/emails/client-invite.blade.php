@@ -7,7 +7,7 @@
 </p>
 
 <p>
-    <a href="{{ $activationUrl }}">Set up your account</a>
+    <a href="{{ $url }}">Set up your account</a>
 </p>
 
 <p>If you'd rather not create an account, that's fine too — your contractor can still have you sign in person on their device.</p>

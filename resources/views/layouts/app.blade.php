@@ -9,6 +9,11 @@
 <body class="bg-gray-100 min-h-screen">
 
     @auth
+    @if(auth()->user()->isDemoAccount())
+        <div class="bg-amber-100 text-amber-900 text-sm text-center py-2 px-4">
+            You're using the live demo — this account and its data are shared with other visitors and reset regularly.
+        </div>
+    @endif
     <nav class="bg-white shadow px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-6">
             <a href="{{ route('dashboard') }}" class="text-xl font-bold text-gray-800">🏠 Remodel Pro</a>
@@ -33,6 +38,14 @@
         @if(session('success'))
             <div class="mb-4 p-4 bg-green-100 text-green-800 rounded">
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('demo_invite_url'))
+            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 text-blue-900 rounded">
+                <p class="font-medium mb-1">Demo mode — no real email was sent.</p>
+                <p class="text-sm mb-2">Here's the invite link that would have been emailed:</p>
+                <a href="{{ session('demo_invite_url') }}" class="text-sm text-blue-700 underline break-all">{{ session('demo_invite_url') }}</a>
             </div>
         @endif
 

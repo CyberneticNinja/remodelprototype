@@ -7,18 +7,18 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ClientInviteMail extends Mailable
+class LoginLinkMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public function __construct(
-        public User $client,
+        public User $user,
         public string $url,
     ) {}
 
     public function build()
     {
-        return $this->subject("You've been invited to {$this->client->createdByContractor->company_name}")
-            ->view('emails.client-invite');
+        return $this->subject('Your login link')
+            ->view('emails.login-link');
     }
 }

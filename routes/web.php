@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ClientActivationController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DemoController;
+use App\Http\Controllers\LoginLinkController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomPhotoController;
@@ -10,19 +11,35 @@ use App\Http\Controllers\SignatureController;
 use Illuminate\Support\Facades\Route;
 
 // ── Guest routes ──────────────────────────────────────────────────────────────
+// There is no password anywhere in this app. Everyone — contractors and any
+// client who chooses to sign online — logs in by requesting a link emailed
+// to them. The same /login/{token} pair also finishes a client's very first
+// invite link (see ClientController), since "activate my account" and
+// "log me in" are the same action once there's no password to set.
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/login', [LoginLinkController::class, 'showRequestForm'])->name('login');
+    Route::post('/login', [LoginLinkController::class, 'sendLink'])
+        ->middleware('throttle:6,1')->name('login.send');
+
+    // Public demo: one click into a shared, reset-on-a-schedule contractor
+    // account (see demo:reset and User::demoContractor()). No email, no
+    // verification — throttled since it hands out an authenticated session
+    // to literally anyone who asks.
+    Route::post('/demo', [DemoController::class, 'login'])
+        ->middleware('throttle:10,1')->name('demo.login');
 });
 
-// Client account activation — reachable only via a signed, temporary email link
-Route::get('/clients/{user}/activate', [ClientActivationController::class, 'show'])
-    ->middleware('signed')->name('clients.activate');
-Route::post('/clients/{user}/activate', [ClientActivationController::class, 'store'])
-    ->middleware('signed')->name('clients.activate.store');
+// Login link confirm/consume — reachable whether guest or already logged in
+// (clicking a stale link while signed in should just work, not get redirected
+// away by guest middleware). GET only shows a "click to confirm" interstitial
+// and never consumes the token itself, since email clients and link scanners
+// sometimes fetch a URL automatically; only the POST from that page's button
+// — a deliberate action by a real person — actually consumes it.
+Route::get('/login/{token}', [LoginLinkController::class, 'showConfirm'])->name('login.confirm');
+Route::post('/login/{token}', [LoginLinkController::class, 'consume'])->name('login.consume');
 
 // ── Authenticated routes ───────────────────────────────────────────────────────
 Route::middleware('auth')->group(function () {

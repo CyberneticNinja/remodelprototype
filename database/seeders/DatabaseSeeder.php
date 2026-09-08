@@ -7,7 +7,6 @@ use App\Models\Room;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,12 +15,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ── Contractor ────────────────────────────────────────────────────
+        // No password to seed — sign in from /login with either email below
+        // and grab the link from the log driver (storage/logs/laravel.log).
         $contractor = User::create([
             'type'            => 'contractor',
             'first_name'      => 'Mike',
             'last_name'       => 'Torres',
             'email'           => 'mike@torresremodeling.com',
-            'password'        => Hash::make('password'),
             'phone'           => '915-555-0101',
             'company_name'    => 'Torres Remodeling LLC',
             'company_address' => '100 Industrial Blvd, El Paso, TX 79901',
@@ -35,7 +35,6 @@ class DatabaseSeeder extends Seeder
             'first_name'               => 'John',
             'last_name'                => 'Smith',
             'email'                    => 'john@example.com',
-            'password'                 => Hash::make('password'),
             'activated_at'             => now(),
             'phone'                    => '915-555-0202',
             'address'                  => '234 Maple Lane, El Paso, TX 79902',

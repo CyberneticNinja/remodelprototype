@@ -10,10 +10,11 @@ return new class extends Migration
      * Run the migrations.
      *
      * A single users table for both contractors and clients, distinguished
-     * by `type`. Contractors self-register with a password. Clients are
-     * created by a contractor and start with no password — they either
-     * activate an account via an emailed invite link (to sign online) or
-     * never activate one at all and just sign in person on the
+     * by `type`. There are no passwords anywhere — everyone (contractors and
+     * clients who choose to sign online) logs in via an emailed magic link,
+     * see the `login_links` table/migration. Clients created by a contractor
+     * either activate an account via their first emailed link (to sign
+     * online) or never activate one at all and just sign in person on the
      * contractor's device.
      */
     public function up(): void
@@ -26,7 +27,6 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
-            $table->string('password')->nullable();
             $table->string('phone')->nullable();
 
             // Contractor-only fields
@@ -43,15 +43,14 @@ return new class extends Migration
             $table->timestamp('invited_at')->nullable();
             $table->timestamp('activated_at')->nullable();
 
+            // Marks the single public-demo contractor account (see
+            // User::demoContractor() and the demo:reset command). Never
+            // mass-assignable — only ever set by that seeding code.
+            $table->boolean('is_demo')->default(false);
+
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
-        });
-
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
@@ -70,7 +69,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('sessions');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('users');
     }
 };

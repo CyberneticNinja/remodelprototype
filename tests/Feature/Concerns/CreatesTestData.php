@@ -6,23 +6,18 @@ use App\Models\Project;
 use App\Models\Room;
 use App\Models\Signature;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 trait CreatesTestData
 {
     protected function makeContractor(array $attrs = []): User
     {
-        return User::factory()->create([
-            'password' => Hash::make('password'),
-            ...$attrs,
-        ]);
+        return User::factory()->create($attrs);
     }
 
     protected function makeClient(User $contractor, array $attrs = [], bool $activated = true): User
     {
         return User::factory()->client()->create([
             'created_by_contractor_id' => $contractor->id,
-            'password'                 => $activated ? Hash::make('password') : null,
             'activated_at'             => $activated ? now() : null,
             ...$attrs,
         ]);

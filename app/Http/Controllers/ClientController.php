@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Mail\ClientInviteMail;
+use App\Models\LoginLink;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 
 class ClientController extends Controller
 {
@@ -43,13 +43,7 @@ class ClientController extends Controller
             'invited_at'               => now(),
         ]);
 
-        $activationUrl = URL::temporarySignedRoute(
-            'clients.activate',
-            now()->addDays(7),
-            ['user' => $client->id]
-        );
-
-        Mail::to($client->email)->send(new ClientInviteMail($client, $activationUrl));
+        $this->sendInvite($client);
 
         return redirect()->route('clients.index')
             ->with('success', "{$client->full_name} was added and invited to sign in online.");
@@ -63,14 +57,24 @@ class ClientController extends Controller
 
         $client->update(['invited_at' => now()]);
 
-        $activationUrl = URL::temporarySignedRoute(
-            'clients.activate',
-            now()->addDays(7),
-            ['user' => $client->id]
-        );
-
-        Mail::to($client->email)->send(new ClientInviteMail($client, $activationUrl));
+        $this->sendInvite($client);
 
         return back()->with('success', "Invite resent to {$client->full_name}.");
+    }
+
+    // The public demo lets a stranger type in ANY email address as a
+    // "client" — we must never actually deliver mail to a real inbox from
+    // it. So the demo contractor gets the link flashed to the screen
+    // instead of a real send (see resources/views/layouts/app.blade.php).
+    private function sendInvite(User $client): void
+    {
+        [, , $url] = LoginLink::issueFor($client, 'invite');
+
+        if (Auth::user()->isDemoAccount()) {
+            session()->flash('demo_invite_url', $url);
+            return;
+        }
+
+        Mail::to($client->email)->send(new ClientInviteMail($client, $url));
     }
 }
